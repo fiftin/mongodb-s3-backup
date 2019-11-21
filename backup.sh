@@ -25,11 +25,13 @@ OPTIONS:
    -b      Amazon S3 bucket name (required)
    -a      Amazon S3 folder (required)
    -f      Backup filename prefix (optional)
+   -d      Database name (optional)
 EOF
 }
 
 MONGODB_USER=
 MONGODB_PASSWORD=
+MONGODB_DB=
 AWS_ACCESS_KEY=
 AWS_SECRET_KEY=
 S3_REGION=
@@ -90,14 +92,30 @@ DATE=$(date -u "+%F-%H%M")
 FILE_NAME="$FILE_NAME_PREFIX$DATE"
 ARCHIVE_NAME="$FILE_NAME.tgz"
 
+MONGODB_ARGS=(--out "$DIR/backup/$FILE_NAME")
 
-# Dump the database
-if [[ -z $MONGODB_USER ]] || [[ -z $MONGODB_PASSWORD ]]
+if [[ -n $MONGODB_USER ]]
 then
-    mongodump --out $DIR/backup/$FILE_NAME
-else
-    mongodump -username "$MONGODB_USER" -password "$MONGODB_PASSWORD" --out $DIR/backup/$FILE_NAME
+	MONGODB_ARGS+=(authenticationDatabase)
+	MONGODB_ARGS+=($MONGODB_USER)
 fi
+
+if [[ -n $MONGODB_PASSWORD ]]
+then
+	MONGODB_ARGS+=("-password")
+	MONGODB_ARGS+=($MONGODB_PASSWORD)
+fi
+
+if [[ -n $MONGODB_DB ]]
+then
+	MONGODB_ARGS+=("-d")
+	MONGODB_ARGS+=($MONGODB_DB)
+	MONGODB_ARGS+=("--authenticationDatabase")
+	MONGODB_ARGS+=($MONGODB_DB)
+fi
+
+mongodump "${MONGODB_ARGS[@]}"
+
 
 # Tar Gzip the file
 tar -C $DIR/backup/ -zcvf $DIR/backup/$ARCHIVE_NAME $FILE_NAME/
@@ -118,11 +136,5 @@ curl -X PUT -T "$DIR/backup/$ARCHIVE_NAME" \
   -H "Authorization: AWS $AWS_ACCESS_KEY:${signature}" \
   https://$S3_BUCKET.s3.amazonaws.com/$FOLDER_NAME/$ARCHIVE_NAME
 
-
-
-# export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY"
-# export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"
-
-# /usr/bin/aws s3 cp $DIR/backup/$ARCHIVE_NAME s3://$S3_BUCKET/$FOLDER_NAME/$ARCHIVE_NAME --content-type application/tar+gzip
 
 rm $DIR/backup/$ARCHIVE_NAME
