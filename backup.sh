@@ -107,11 +107,22 @@ rm -r $DIR/backup/$FILE_NAME
 
 # Send the file to the backup drive or S3
 
+dateValue=`date -R`
+stringToSign="PUT\n\napplication/tar+gzip\n${dateValue}\n/$S3_BUCKET/$FOLDER_NAME/$ARCHIVE_NAME"
+signature=`echo -en ${stringToSign} | openssl sha1 -hmac $AWS_SECRET_KEY -binary | base64`
 
-export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY"
-export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"
+curl -X PUT -T "$DIR/backup/$ARCHIVE_NAME" \
+  -H "Host: $S3_BUCKET.s3.amazonaws.com" \
+  -H "Date: ${dateValue}" \
+  -H "Content-Type: application/tar+gzip" \
+  -H "Authorization: AWS $AWS_ACCESS_KEY:${signature}" \
+  https://$S3_BUCKET.s3.amazonaws.com/$FOLDER_NAME/$ARCHIVE_NAME
 
 
-/usr/bin/aws s3 cp $DIR/backup/$ARCHIVE_NAME s3://$S3_BUCKET/$FOLDER_NAME/$ARCHIVE_NAME --content-type application/tar+gzip
+
+# export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY"
+# export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"
+
+# /usr/bin/aws s3 cp $DIR/backup/$ARCHIVE_NAME s3://$S3_BUCKET/$FOLDER_NAME/$ARCHIVE_NAME --content-type application/tar+gzip
 
 rm $DIR/backup/$ARCHIVE_NAME
