@@ -99,13 +99,13 @@ MONGODB_ARGS=(--out "$DIR/backup/$FILE_NAME")
 
 if [[ -n $MONGODB_USER ]]
 then
-	MONGODB_ARGS+=(authenticationDatabase)
+	MONGODB_ARGS+=("-u")
 	MONGODB_ARGS+=($MONGODB_USER)
 fi
 
 if [[ -n $MONGODB_PASSWORD ]]
 then
-	MONGODB_ARGS+=("-password")
+	MONGODB_ARGS+=("-p")
 	MONGODB_ARGS+=($MONGODB_PASSWORD)
 fi
 
@@ -113,8 +113,7 @@ if [[ -n $MONGODB_DB ]]
 then
 	MONGODB_ARGS+=("-d")
 	MONGODB_ARGS+=($MONGODB_DB)
-	MONGODB_ARGS+=("--authenticationDatabase")
-	MONGODB_ARGS+=($MONGODB_DB)
+	MONGODB_ARGS+=("--authenticationDatabase=$MONGODB_DB")
 fi
 
 mongodump "${MONGODB_ARGS[@]}"
