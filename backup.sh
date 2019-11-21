@@ -40,7 +40,7 @@ FOLDER_NAME=
 FILE_NAME_PREFIX=
 
 
-while getopts “ht:u:p:k:s:r:b:a:f:” OPTION
+while getopts “ht:u:p:k:s:r:b:a:f:d:” OPTION
 do
   case $OPTION in
     h)
@@ -71,6 +71,9 @@ do
     f)
       FILE_NAME_PREFIX=$OPTARG
       ;;
+    d)
+      MONGODB_DB=$OPTARG
+      ;;
     ?)
       usage
       exit
@@ -78,7 +81,7 @@ do
   esac
 done
 
-if [[ -z $AWS_ACCESS_KEY ]] || [[ -z $AWS_SECRET_KEY ]] || [[ -z $S3_REGION ]] || [[ -z $S3_BUCKET ]] || [[ -z $FOLDER_NAME ]]
+if [[ -z $AWS_ACCESS_KEY ]] || [[ -z $AWS_SECRET_KEY ]] || [[ -z $S3_REGION ]] || [[ -z $S3_BUCKET ]] || [[ -z $FOLDER_NAME ]] || [[ -z $AWS_SECRET_KEY ]]
 then
   usage
   exit 1
